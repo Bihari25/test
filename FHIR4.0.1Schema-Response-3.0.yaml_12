@@ -1,0 +1,2356 @@
+openapi: 3.0.0
+info:
+  contact:
+    name: IHR API Support
+    email: ihr_api_support@uhg.com
+  description: 'The IHR API allows registered applications to access data contained within a consolidated Individual Health Record for a UnitedHealth Care member with Medical, Dental and Pharmacy. The IHR API is developed using RESTful principles.'
+  termsOfService: 'https://www.optumdeveloper.com/content/odv-optumdev/optum-developer/en/legal-terms/terms-of-use.html'
+  title: individual-health-records
+  version: '2.5.0'
+servers:
+  - url: '''POST /individual-health-records/v1.0/'''
+x-serviceLevelObjectives:
+  x-availability: '99.99'
+  x-expectedMsgsPerDay: '10000'
+  x-maxMsgsPerHour: '2000'
+  x-responseTime: '500'
+  x-throughput: '30'
+  x-maxPayloadSize: 2MB
+
+paths:
+
+  /read:
+    post:
+      tags:
+        - >-
+          A name that can be used for this particular path and action, "/read"
+          is reserved POST for GET pattern to eliminate PHI in GET parameters.
+          This should be used for returning a single element as you would
+          receive from a GET on a resource with an identifier
+      summary: Create a Composition resource
+      operationId: getIhr
+      parameters: []
+      responses:
+        '200':
+          description: Search Composition operation successful
+          content:
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/Bundle'
+      requestBody:
+        $ref: '#/components/requestBodies/Bundle'
+      security:
+        - oAuthSample: []
+
+      description: A Brief Description of this resource Path and action
+
+components:
+
+  securitySchemes:
+    oAuthSample:
+      type: oauth2
+      description: This API uses OAuth 2
+      flows:
+        clientCredentials:
+          scopes: {}
+          tokenUrl: >-
+            https://cors-proxy.origin-elr-core.optum.com/token-server/auth/oauth/v2/token
+  requestBodies:
+    Bundle:
+      content:
+        application/fhir+json:
+          schema:
+            $ref: '#/components/schemas/Bundle'
+      required: true
+  schemas:
+    Bundle:
+      allOf:
+        - $ref: '#/components/schemas/Resource'
+        - type: object
+          properties:
+            id:
+              type: string
+              pattern: '[A-Za-z0-9\-\.]{1,64}'
+              description: Unique id for the bundle. This may be any string value that does not contain spaces.
+            type:
+              type: string
+              enum:
+                - transaction
+              description: Indicates the purpose of this bundle &ndash; how it is intended to be used.
+            entry:
+              type: array
+              items:
+                $ref: '#/components/schemas/Bundle_Entry'
+      required:
+        - id
+        - type
+        - entry
+    Bundle_Entry:
+      allOf:
+        - $ref: '#/components/schemas/BackboneElement'
+        - type: object
+          properties:
+            resource:
+              $ref: '#/components/schemas/Resource'
+    Goal:
+      allOf:
+        - $ref: '#/components/schemas/DomainResource'
+        - type: object
+          properties:
+            meta:
+              $ref: '#/components/schemas/Meta'
+            contained:
+              type: array
+              description: 'Contained, inline Resources.'
+              items:
+                $ref: '#/components/schemas/Goal_Observation'
+            Identifier:
+              type: array
+              description: 'A numeric or alphanumeric string that is associated with a single object or entity within a given system.'
+              items:
+                anyOf:
+                  - $ref: '#/components/schemas/recordKey'
+                  - $ref: '#/components/schemas/instanceId'
+                  - $ref: '#/components/schemas/referenceIds'
+                  - $ref: '#/components/schemas/relatedConditionInstanceIds'
+              example:
+                - type:
+                    text: recordKey
+                  value: 'lQTW7h-A=+l@2P{huiZS'
+                - type:
+                    text: instanceId
+                  value: '36904128193011'
+                - type:
+                    text: referenceIds
+                  value: '["\1234463535\"]'
+                - type:
+                    text: relatedConditionInstanceIds
+                  value:
+                    - 1234463535
+                    - 12345678
+            extension:
+              type: array
+              description: "All extensions in this list are defined in this specification and have a base URI. "
+              items:
+                anyOf:
+                  - $ref: '#/components/schemas/sensitivityClasses'
+                  - $ref: '#/components/schemas/dataSource'
+                  - $ref: '#/components/schemas/clinicallyRelevantDate'
+                  - $ref: '#/components/schemas/expectedAchievement'
+                  - $ref: '#/components/schemas/presenceStateTerm'
+                  - $ref: '#/components/schemas/goalTargetType'
+              example:
+                - url: 'https://new-wiki.optum.com/display/IHRI/IHR+API+Sensitivity+Classes'
+                  valueString: '["CommunicableDiseases"]'
+                - url: 'https://new-wiki.optum.com/display/IHRI/IHR+API+Data+Source+Method'
+                  valueString: '["System Interface Data Acquisition Method"]'
+                - url: 'https://new-wiki.optum.com/display/IHRI/IHR+API+Clinically+Relevant+Date'
+                  valueDateTime: '2019-06-19T21:09:29+00:00'
+                - url: 'https://new-wiki.optum.com/display/IHRI/IHR+API+Goal+Expected+Achievement'
+                  valueString: We need to get the patient's diastolic BP in range
+                - url: 'https://new-wiki.optum.com/pages/viewpage.action?spaceKey=IHRI&title=IHR+API+Presence+State'
+                  valueCodeableConcept:
+                    coding:
+                      - display: Present
+                    text: Present
+                - url: 'https://new-wiki.optum.com/display/IHRI/IHR+API+Target+Type'
+                  valueCodeableConcept:
+                    coding:
+                      - display: Weight Control Goal
+                    text: Weight Control Goal
+            achievementStatus:
+              allOf:
+                - $ref: '#/components/schemas/CodeableConcept'
+              description: 'An object containing attributes related to the goal status, also called a health status indicator.This is a calculated value, and determines whether the goals is Met or Not Met.'
+              example:
+                coding:
+                  - display: Not Met
+                text: Not Met
+            category:
+              allOf:
+                - $ref: '#/components/schemas/CodeableConcept'
+              description: 'The object that is the classification that the goal                              belongs to. '
+              example:
+                - coding:
+                    - display: Nursing Outcome
+                  text: Nursing Outcome
+            description:
+              allOf:
+                - $ref: '#/components/schemas/CodeableConcept'
+              description: A consumer-friendly textual description of the expected benefit to the patient
+              example:
+                coding:
+                  - display: Body Mass Index (BMI) Monitoring Goal
+                text: Body Mass Index (BMI) Monitoring Goal
+            startDate:
+              allOf:
+                - $ref: '#/components/schemas/date'
+            target:
+              type: array
+              items:
+                allOf:
+                  - $ref: '#/components/schemas/Goal_Target'
+              description: Target outcome for the goal
+              example:
+                - detailString: '*Screening BMI Annual'
+                  dueDate: '2020-12-12'
+            outcomeReference:
+              allOf:
+                - $ref: '#/components/schemas/Reference'
+              description: A consumer-friendly textual description of a condition being treated at the time of admission.
+              example:
+                reference: '#/components/schemas/Goal_Observation'
+          required:
+            - resourceType
+
+    Goal_Observation:
+      allOf:
+        - properties:
+            resourceType:
+              type: string
+              example: Observation
+            id:
+              type: string
+              example: '1'
+            effectiveDateTime:
+              allOf:
+                - $ref: '#/components/schemas/dateTime'
+            valueString:
+              type: string
+              example: '1234567890'
+    Goal_Target:
+      type: object
+      properties:
+        detailString:
+          type: string
+          pattern: '[ \r\n\t\S]+'
+          description: The textual description of the target of the goal.
+          example: '*Screening BMI Annual'
+        dueDate:
+          allOf:
+            - $ref: '#/components/schemas/date'
+          example: '2020-12-12'
+      required:
+        - detailString
+        - dueDate
+    AllergyIntolerance:
+      allOf:
+        - $ref: '#/components/schemas/Resource'
+        - type: object
+          properties:
+            resourceType:
+              type: string
+              description: An identifier assigned to the record.
+              enum:
+                - AllergyIntolerance
+            identifier:
+              type: array
+              description: 'A numeric or alphanumeric string that is associated with a single object or entity within a given system.'
+              items:
+                anyOf:
+                  - $ref: '#/components/schemas/recordKey'
+                  - $ref: '#/components/schemas/instanceId'
+                  - $ref: '#/components/schemas/referenceIds'
+              example:
+                - type:
+                    text: recordKey
+                  value: 'o*}Dci^Vj2DS9mggDvEzepfVVqzx{ZEsiUvmmn<+gbH%HEjP.xoJ0P2h8Y(h'
+                - type:
+                    text: instanceId
+                  value: '19108821002069'
+                - type:
+                    text: referenceIds
+                  value: '["2019-01-02T03:04:44Z-Rally-1sE"]'
+            extension:
+              type: array
+              description: 'All extensions in this list are defined in this specification and have a base URI. '
+              items:
+                anyOf:
+                  - $ref: '#/components/schemas/presenceStateTerm'
+                  - $ref: '#/components/schemas/clinicallyRelevantDate'
+                  - $ref: '#/components/schemas/sensitivityClasses'
+                  - $ref: '#/components/schemas/dataSource'
+              example:
+                - url: 'https://new-wiki.optum.com/pages/viewpage.action?spaceKey=IHRI&title=IHR+API+Presence+State'
+                  valueString: Present
+                - url: 'https://new-wiki.optum.com/display/IHRI/IHR+API+Clinically+Relevant+Date'
+                  valueDateTime: '2019-06-19T21:09:29+00:00'
+                - url: 'https://new-wiki.optum.com/display/IHRI/IHR+API+Sensitivity+Classes'
+                  valueString: '["Substance Abuse","Genetics"]'
+                - url: 'https://new-wiki.optum.com/display/IHRI/IHR+API+Data+Source+Method'
+                  valueString: '["System Interface Data Acquisition Method"]'
+            clinicalStatus:
+              allOf:
+                - $ref: '#/components/schemas/CodeableConcept'
+              description: 'An object containing attributes related to a status.  Status value changes only when data is ingested into into the IHR, and no other internal IHR calculation is used to update this field.'
+              example:
+                coding:
+                  - system: SNOMEDCT Qualifier Value Foreign Key
+                    code: '55561003'
+                    display: Active
+                text: Active
+            code:
+              allOf:
+                - $ref: '#/components/schemas/CodeableConcept'
+              description: An object containing attributes related to the description an adverse reaction type.
+              example:
+                coding:
+                  - system: ICD-10 Diagnosis
+                    code: T45.1X5A
+                    display: Adverse Effect of Antineoplastic and Immunosuppressive Drugs
+                  - system: 'http://hl7.org/fhir/sid/icd-10-cm'
+                    code: T45.1X5A
+                text: Adverse reaction to immunosuppressive drugs
+            onsetDateTime:
+              allOf:
+                - $ref: '#/components/schemas/dateTime'
+              description: 'The date the person''s health condition was officially diagnosed, in the format ''yyyy-MM-ddTHH:mm:ssZ (UTC time).'
+              example: '2019-06-09T00:00:00+00:00'
+            recordedDate:
+              allOf:
+                - $ref: '#/components/schemas/dateTime'
+              description: 'The date that the IHR first "knows" about the item, in the format ''yyyy-MM-ddTHH:mm:ssZ (UTC time). This date updates using algorithmic calculations based on data received about the item. This date is not a clinical date, but may be based on one.'
+              example: '2019-06-09T00:00:00+00:00'
+            note:
+              type: array
+              description: A free-text note added by the patient regarding the object. 500 character limit.
+              items:
+                $ref: '#/components/schemas/Annotation'
+              example:
+                - authorString: Jane Doe
+                  text: The chemotherapy medication causes hives.
+            reaction:
+              type: array
+              items:
+                $ref: '#/components/schemas/AllergyIntolerance_Reaction'
+    AllergyIntolerance_Reaction:
+      allOf:
+        - properties:
+            substance:
+              type: array
+              items:
+                $ref: '#/components/schemas/CodeableConcept'
+              description: An object array of one or more allergens (causative agent) for the adverse reaxtion.
+              example:
+                - coding:
+                    - system: SNOMEDCT Substance Foreign Key
+                      code: '419933005'
+                      display: Antineoplastic Agent
+                  text: Chemotherapy Medication
+            manifestation:
+              description: An object array of one or more reactions to the causative agent (i.e. one or more manifestations).
+              type: array
+              items:
+                $ref: '#/components/schemas/CodeableConcept'
+              example:
+                - coding:
+                    - system: SNOMEDCT Clinical Finding Foreign Key
+                      code: '39579001'
+                      display: Anaphylaxis
+                  text: Anaphylaxis
+            extension:
+              allOf:
+                - $ref: '#/components/schemas/Extension'
+              description: An object containing attributes related to the severity of the reaction.
+              example:
+                - url: reactionSeverity
+                  valueCodeableConcept:
+                    coding:
+                      - system: HL7v2 Allergy Severity - Table 0128 Foreign Key
+                        code: SV
+                        display: Antineoplastic Agent
+                    text: Chemotherapy Medication
+    Condition:
+      allOf:
+        - $ref: '#/components/schemas/Resource'
+        - type: object
+          description: A numeric or alphanumeric string that is associated with a single object or entity within a given system.
+          properties:
+            resourceType:
+              type: string
+              example: Condition
+            identifier:
+              type: array
+              items:
+                anyOf:
+                  - $ref: '#/components/schemas/recordKey'
+                  - $ref: '#/components/schemas/instanceId'
+                  - $ref: '#/components/schemas/relatedConditionInstanceIds'
+                  - $ref: '#/components/schemas/relatedObservationInstanceIds'
+                  - $ref: '#/components/schemas/relatedCareTeamInstanceIds'
+                  - $ref: '#/components/schemas/sourceClaimIds'
+                  - $ref: '#/components/schemas/referenceIds'
+              description: A numeric or alphanumeric string that is associated with a single object or entity within a given system.
+              required:
+                - recordKey
+                - instanceId
+              example:
+                - type:
+                    text: recordKey
+                  value: 'o*}Dci^Vj2DS9mggDvEzepfVVqzx{ZEsiUvmmn<+gbH%HEjP.xoJ0P2h8Y(h'
+                - type:
+                    text: instanceId
+                  value: '19108821002069'
+                - type:
+                    text: relatedConditionInstanceIds
+                    value: "[123456,789]"
+                - type:
+                    text: relatedObservationInstanceIds
+                    value: "[123456,789]"
+                - type:
+                    text: relatedCareTeamInstanceIds
+                    value: "[123456,789]"
+                - type:
+                    text: sourceClaimIds
+                    value: "[\"123456\",\"789\"]"
+                - type:
+                    text: referenceIds
+                  value: "[\"2019-01-02T03:04:44Z-Rally-1sE\"]"
+            extension:
+              type: array
+              description: All extensions in this list are defined in this specification and have a base URI.
+              items:
+                anyOf:
+                  - $ref: '#/components/schemas/sensitivityClasses'
+                  - $ref: '#/components/schemas/dataSource'
+                  - $ref: '#/components/schemas/clinicallyRelevantDate'
+                  - $ref: '#/components/schemas/presenceStateTerm'
+                  - $ref: '#/components/schemas/status'
+                  - $ref: '#/components/schemas/clinicalCourse'
+              example:
+                - url: 'https://new-wiki.optum.com/display/IHRI/IHR+API+Sensitivity+Classes'
+                  valueString: '["Substance Abuse","Genetics"]'
+                - url: 'https://new-wiki.optum.com/display/IHRI/IHR+API+Data+Source+Method'
+                  valueString: '["System Interface Data Acquisition Method"]'
+                - url: 'https://new-wiki.optum.com/display/IHRI/IHR+API+Clinically+Relevant+Date'
+                  valueDateTime: '2019-06-19T21:09:29+00:00'
+                - url: 'https://new-wiki.optum.com/pages/viewpage.action?spaceKey=IHRI&title=IHR+API+Presence+State'
+                  valueString: Present
+                - url: 'https://new-wiki.optum.com/display/IHRI/IHR+API+Status'
+                  valueCodeableConcept:
+                    coding:
+                      system: SNOMEDCT Qualifier Value Foreign Key
+                      code: 55561003
+                      display: Active
+                    text: Active
+                - url: 'https://new-wiki.optum.com/display/IHRI/IHR+API+Clinical+Course'
+                  valueString: Chronic
+            code:
+              allOf:
+                - $ref: '#/components/schemas/CodeableConcept'
+              description: An object containing attributes related to a condition. Conditions include current and past diseases/disorders.  Adverse reactions/allergies and signs/symptoms are excluded in this data class.
+              example:
+                coding:
+                  - system: ICD-10 Diagnosis
+                    code: J00
+                    display: Common Cold
+                  - system: 'http://hl7.org/fhir/sid/icd-10-cm'
+                    code: J00
+                text: Common Cold
+            onsetDateTime:
+              allOf:
+                - $ref: '#/components/schemas/dateTime'
+              description: The date the person's condition was first diagnosed in the format 'yyyy-MM-ddTHH:mm:ssZ (UTC time). This date is the clinical start date.
+              example: '2019-06-09T00:00:00+00:00'
+            recordedDate:
+              allOf:
+                - $ref: '#/components/schemas/dateTime'
+              description: The date that the IHR first 'knows' about the item, in the format 'yyyy-MM-ddTHH:mm:ssZ (UTC time). This date updates using algorithmic calculations based on data received about the item. This date is not a clinical date, but may be based on one.
+              example: '2019-06-09T00:00:00+00:00'
+            note:
+              type: array
+              description: A free-text note added by the patient regarding the object. 500 character limit.
+              items:
+                $ref: '#/components/schemas/Annotation'
+              example:
+                authorString: Jane Doe
+                text: The chemotherapy medication causes hives.
+    CareTeam:
+      allOf:
+        - $ref: '#/components/schemas/DomainResource'
+        - type: object
+          properties:
+            text:
+              $ref: '#/components/schemas/Element'
+            identifier:
+              type: array
+              items:
+                anyOf:
+                  - $ref: '#/components/schemas/recordKey'
+                  - $ref: '#/components/schemas/referenceIds'
+                  - $ref: '#/components/schemas/instanceId'
+              description: A numeric or alphanumeric string that is associated with a single object or entity within a given system.
+              example:
+                identifier:
+                  - system: recordKey
+                    value: lQTW7h-A=+l@2J)gCQY=
+                    assigner:
+                      reference: "#1"
+              required:
+                - recordKey
+                - instanceId
+            extension:
+              type: array
+              items:
+                anyOf:
+                  - $ref: '#/components/schemas/healthcareservice'
+                  - $ref: '#/components/schemas/PractitionerFlag'
+                  - $ref: '#/components/schemas/selfRoleTerm'
+              description: All extensions in this list are defined in this specification and have a base URI.
+              example:
+                extension:
+                  - url: https://new-wiki.optum.com/pages/viewpage.action?spaceKey=IHRI&title=IHR+API+Presence+State
+                    valueString: Present
+            period:
+              $ref: '#/components/schemas/Period'
+            subject:
+              $ref: '#/components/schemas/Reference'
+            participant:
+              type: array
+              items:
+                $ref: '#/components/schemas/CareTeam_Participant'
+
+    CareTeam_Participant:
+      allOf:
+        - type: object
+          properties:
+            member:
+              $ref: '#/components/schemas/Reference'
+            period:
+              $ref: '#/components/schemas/Period'
+            role:
+              type: array
+              items:
+                $ref: '#/components/schemas/CodeableConcept'
+              description: A textual description of the role the person / entity plays in relation to an actor, such as Insurer, Health Proxy, Primary Care Physician, etc.
+    Device:
+      allOf:
+        - $ref: '#/components/schemas/DomainResource'
+        - type: object
+          properties:
+            identifier:
+              type: array
+              description: A numeric or alphanumeric string that is associated with a single object or entity within a given system.
+              example:
+                - type:
+                    text: recordKey
+                  value: o*}Dci^Vj2DS9mggDvEzepfVVqzx{ZEsiUvmmn<+gbH%HEjP.xoJ0P2h8Y(h
+                - type:
+                    text: instanceId
+                  value: '19523524502060'
+                - type:
+                    text: referenceIds
+                  value: '["2019-01-02T03:04:44Z-Rally-1sE"]'
+              items:
+                anyOf:
+                  - $ref: '#/components/schemas/recordKey'
+                  - $ref: '#/components/schemas/instanceId'
+                  - $ref: '#/components/schemas/referenceIds'
+                  - $ref: '#/components/schemas/relatedCareTeamInstanceIds'
+            extension:
+              type: array
+              description: All extensions in this list are defined in this specification and have a base URI.
+              items:
+                anyOf:
+                  - $ref: '#/components/schemas/medicalDeviceStatus'
+                  - $ref: '#/components/schemas/presenceStateTerm'
+                  - $ref: '#/components/schemas/medicalDeviceDate'
+                  - $ref: '#/components/schemas/lastDispensedDate'
+                  - $ref: '#/components/schemas/clinicallyRelevantDate'
+                  - $ref: '#/components/schemas/sensitivityClasses'
+                  - $ref: '#/components/schemas/dataSource'
+              example:
+                - url: 'https://new-wiki.optum.com/display/IHRI/IHR+API+Status'
+                  valueCodeableConcept:
+                    coding:
+                      - system: TEST-sourceVocabulary
+                        code: TEST-sourceVocabularyCode
+                        display: Active
+                    text: Active
+                - url: 'https://new-wiki.optum.com/pages/viewpage.action?spaceKey=IHRI&title=IHR+API+Presence+State'
+                  valueString: Present
+                - url: 'https://new-wiki.optum.com/display/IHRI/IHR+API+Start+Date'
+                  valueDateTime: '2019-06-10T00:00:00+00:00'
+                - url: 'https://new-wiki.optum.com/display/IHRI/IHR+API+Clinically+Relevant+Date'
+                  valueDateTime: '2018-02-17T11:45:41+00:00'
+                - url: 'https://new-wiki.optum.com/display/IHRI/IHR+API+Device+Last+Dispense+Date'
+                  valueDateTime: '2018-05-02T00:00:00+00:00'
+                - url: 'https://new-wiki.optum.com/display/IHRI/IHR+API+Data+Source+Method'
+                  valueString:
+                    - System Interface Data Acquisition Method
+                - url: 'https://new-wiki.optum.com/display/IHRI/IHR+API+Sensitivity+Classes'
+                  valueString:
+                    - Substance Abuse
+                    - Genetics
+            type:
+              allOf:
+                - $ref: '#/components/schemas/CodeableConcept'
+              description: A numeric or alphanumeric string that is associated with a single object or entity within a given system.
+              example:
+                coding:
+                  - system: CPT4/HCPCS/CDT Vocabulary
+                    code: E0603
+                    display: 'Breast pump, electric (AC and/or DC)'
+                  - system: 'http://www.ama-assn.org/go/cpt'
+                    code: 99025
+                text: Breast Pump
+            owner:
+              allOf:
+                - $ref: '#/components/schemas/Identifier'
+              description: 'An object containing attributes related to a health device supplier. The supplier, which can be a pharmacy, hospital, or medical professional.'
+              example:
+                identifier:
+                  type:
+                    coding:
+                      - system: 'http://hl7.org/fhir/sid/us-npi'
+                        code: NPI
+                        display: National Provider Identifier
+                  value: '1699718775'
+                display: TEST-NAME-NPINUM
+            note:
+              type: array
+              description: A free-text note added by the patient regarding the object. 500 character limit.
+              items:
+                $ref: '#/components/schemas/Annotation'
+              example:
+                - authorString: Jane Doe
+                  text: The author of a free-text note that is added to a patient record.
+    HealthcareService:
+      allOf:
+        - $ref: '#/components/schemas/DomainResource'
+        - type: object
+          properties:
+            type:
+              $ref: '#/components/schemas/CodeableConcept'
+    Observation:
+      allOf:
+        - $ref: '#/components/schemas/DomainResource'
+        - type: object
+          properties:
+            identifier:
+              type: array
+              items:
+                anyOf:
+                  - $ref: '#/components/schemas/recordKey'
+                  - $ref: '#/components/schemas/instanceId'
+                  - $ref: '#/components/schemas/referenceIds'
+              description: A numeric or alphanumeric string that is associated with a single object or entity within a given system.
+              example:
+                - type:
+                    text: recordKey
+                  value: o*}Dci^Vj2DS9mggDvEzepfVVqzx{ZEsiUvmmn<+gbH%HEjP.xoJ0P2h8Y(h
+                  assigner:
+                    reference: "#1"
+                - type:
+                    text: instanceId
+                  value: '123456789'
+                  assigner:
+                    reference: "#1"
+              required:
+                - recordKey
+                - instanceId
+            extension:
+              type: array
+              items:
+                anyOf:
+                  - $ref: '#/components/schemas/observationUnitOfMeasure'
+                  - $ref: '#/components/schemas/dataSource'
+                  - $ref: '#/components/schemas/sensitivityClasses'
+              description: All extensions in this list are defined in this specification and have a base URI.
+              example:
+                extension:
+                  - url: https://new-wiki.optum.com/pages/viewpage.action?spaceKey    =IHRI&title=IHR+API+Presence+State
+                    valueString: Present
+            code:
+              type: array
+              description:  A numeric or alphanumeric string that is associated with a single object or entity within a given system.
+              items:
+                $ref: '#/components/schemas/CodeableConcept'
+              example:
+                code:
+                  coding:
+                    - system: LOINC Observation Foreign Key
+                      code: '14771-0'
+                      display: Glucose Measurement - Fasting Blood (FBS)
+                text: Fasting Blood Sugar
+            effectiveDateTime:
+              $ref: '#/components/schemas/dateTime'
+            valueString:
+              type: string
+              example: '300'
+            note:
+              type: array
+              items:
+                allOf:
+                  - $ref: '#/components/schemas/patientNote'
+                  - $ref: '#/components/schemas/patientNoteAuthor'
+              description: Further information about the statement.
+              example: 'Further other information'
+            referenceRange:
+              type: array
+              items:
+                type: string
+                description: Further information about the statement.
+            component:
+              allOf:
+                - $ref: '#/components/schemas/observationValue'
+                - $ref: '#/components/schemas/abnormalIndicator'
+    Immunization:
+      allOf:
+        - $ref: '#/components/schemas/DomainResource'
+        - type: object
+          properties:
+            identifier:
+              type: array
+              items:
+                anyOf:
+                  - $ref: '#/components/schemas/recordKey'
+                  - $ref: '#/components/schemas/instanceId'
+                  - $ref: '#/components/schemas/referenceIds'
+                  - $ref: '#/components/schemas/relatedConditionInstanceIds'
+                  - $ref: '#/components/schemas/relatedObservationInstanceIds'
+                  - $ref: '#/components/schemas/relatedCareTeamInstanceIds'
+                  - $ref: '#/components/schemas/relatedServiceFacilityProviderInstanceIds'
+                  - $ref: '#/components/schemas/sourceClaimIds'
+              description: A numeric or alphanumeric string that is associated with a single object or entity within a given system.
+              example:
+                - type:
+                    text: recordKey
+                  value: o*}Dci^Vj2DS9mggDvEzepfVVqzx{ZEsiUvmmn<+gbH%HEjP.xoJ0P2h8Y(h
+                  assigner:
+                    reference: "#1"
+                - type:
+                    text: instanceId
+                  value: '19523524502060'
+                  assigner:
+                    reference: "#1"
+              required:
+                - recordKey
+                - instanceId
+            extension:
+              type: array
+              items:
+                anyOf:
+                  - $ref: '#/components/schemas/concept'
+                  - $ref: '#/components/schemas/presenceStateTerm'
+                  - $ref: '#/components/schemas/dosageUnit'
+                  - $ref: '#/components/schemas/dosageFrequency'
+                  - $ref: '#/components/schemas/dosageForm'
+                  - $ref: '#/components/schemas/genericFlag'
+                  - $ref: '#/components/schemas/clinicallyRelevantDate'
+                  - $ref: '#/components/schemas/sensitivityClasses'
+                  - $ref: '#/components/schemas/dataSource'
+              description: All extensions in this list are defined in this specification and have a base URI.
+              example:
+                extension:
+                  - url: https://new-wiki.optum.com/pages/viewpage.action?spaceKey=IHRI&title=IHR+API+Presence+State
+                    valueString: Present
+            vaccineCode:
+              type: array
+              description:  An object that contains the the attributes of the product associated with the immunization..
+              items:
+                $ref: '#/components/schemas/medication'
+              example:
+                code:
+                  coding:
+                    - system: NDC Foreign Key
+                      code: '49281040015'
+                      display: Adacel Intramuscular Suspension 5-2-15.5 LF-mcg/0.5 mL
+                text: Adacel Intramuscular Suspension 5-2-15.5 LF-mcg/0.5 mL
+            doseQuantity:
+              type: object
+              description:  The number of doses of medication taken by the person at the Dosage Frequency
+              items:
+                $ref: '#/components/schemas/SimpleQuantity'
+            occurrenceDateTime:
+              $ref: '#/components/schemas/healthEventDate'
+            note:
+              type: array
+              items:
+                anyOf:
+                  - $ref: '#/components/schemas/patientNote'
+                  - $ref: '#/components/schemas/patientNoteAuthor'
+              description: >-
+                Further information about the statement.
+              example: 'Further other information'
+    Organization:
+      allOf:
+        - $ref: '#/components/schemas/DomainResource'
+        - type: object
+          properties:
+            Identifier:
+              type: array
+              description: 'A numeric or alphanumeric string that is associated with a single object or entity within a given system.'
+              items:
+                anyOf:
+                  - $ref: '#/components/schemas/npinum'
+                  - $ref: '#/components/schemas/relatedEntityMPIN'
+                  - $ref: '#/components/schemas/recordKey'
+                  - $ref: '#/components/schemas/instanceId'
+                  - $ref: '#/components/schemas/referenceIds'
+              example:
+                identifier:
+                  - system: instanceId
+                    value: '19523524502060'
+                    assigner:
+                      reference: "#1"
+                  - system: recordKey
+                    value: 'lQTW7h-A=+l@2J)gCQY='
+                    assigner:
+                      reference: "#1"
+              required:
+                - recordKey
+                - instanceId
+            name:
+              type: string
+              pattern: '[ \r\n\t\S]+'
+              description: A name associated with the organization.
+    MedicationStatement:
+      allOf:
+        - $ref: '#/components/schemas/DomainResource'
+        - type: object
+          properties:
+            extension:
+              type: array
+              nullable: true
+              description: "All extensions in this list are defined in this specification and have a base URI. "
+              items:
+                anyOf:
+                  - $ref: '#/components/schemas/medicationStatus'
+                  - $ref: '#/components/schemas/presenceStateTerm'
+                  - $ref: '#/components/schemas/genericFlag'
+                  - $ref: '#/components/schemas/clinicallyRelevantDate'
+                  - $ref: '#/components/schemas/firstDoseDate'
+                  - $ref: '#/components/schemas/expectedFillDate'
+                  - $ref: '#/components/schemas/lastFillDate'
+                  - $ref: '#/components/schemas/icueLastUpdateDate'
+                  - $ref: '#/components/schemas/sensitivityClasses'
+                  - $ref: '#/components/schemas/dataSource'
+            Identifier:
+              type: array
+              description: 'A numeric or alphanumeric string that is associated with a single object or entity within a given system.'
+              items:
+                anyOf:
+                  - $ref: '#/components/schemas/recordKey'
+                  - $ref: '#/components/schemas/instanceId'
+                  - $ref: '#/components/schemas/referenceIds'
+                  - $ref: '#/components/schemas/prescriptionId'
+                  - $ref: '#/components/schemas/relatedCareTeamInstanceIds'
+                  - $ref: '#/components/schemas/relatedConditionInstanceIds'
+                  - $ref: '#/components/schemas/relatedDeviceInstanceIds'
+                  - $ref: '#/components/schemas/relatedServiceFacilityProviderInstanceIds'
+                  - $ref: '#/components/schemas/icueSeqId'
+              example:
+                identifier:
+                  - type:
+                      text: recordKey
+                    value: o*}Dci^Vj2DS9mggDvEzepfVVqzx{ZEsiUvmmn<+gbH%HEjP.xoJ0P2h8Y(h
+                  - type:
+                      text: instanceId
+                    value: '19523524502060'
+
+            subject:
+              allOf:
+                - $ref: '#/components/schemas/Reference'
+              description: Who is/was taking the medication
+              example:
+                reference: Patient/d73c58df-7af9-3337-98d7-7a937547128a
+
+            basedOn:
+              type: array
+              items:
+                $ref: '#/components/schemas/Reference'
+            partOf:
+              type: array
+              items:
+                $ref: '#/components/schemas/Reference'
+            medicationReference:
+              $ref: '#/components/schemas/Reference'
+            effectiveDateTime:
+              nullable: true
+              $ref: '#/components/schemas/dateTime'
+              description: >-
+                The date that the IHR first "knows" about the item, in the format 'yyyy-MM-ddTHH:mm:ssZ (UTC time). This date updates using algorithmic calculations based on data received about the item. This date is not a clinical date, but may be based on one.
+              example:
+                effectiveDateTime: '2019-10-24T13:33:05Z'
+            note:
+              nullable: true
+              type: array
+              description: 'A free-text note added by the patient regarding the object. 500 character limit.'
+              items:
+                anyOf:
+                  - $ref: '#/components/schemas/patientNote'
+                  - $ref: '#/components/schemas/clinicalNote'
+            dosage:
+              nullable: true
+              type: array
+              items:
+                $ref: '#/components/schemas/Dosage'
+              example:
+                dosage:
+                  - text: 1 oral capsule every other day for 30 days
+                  - doseAndRate:
+                      - doseQuantity:
+                          value: 1
+                  - doseAndRate:
+                      - type:
+                          coding:
+                            - system: HL7v2 Units - Table 0574
+                              code: cap
+                              display: Capsule
+                          text: Capsule
+                  - timing:
+                      code:
+                        coding:
+                          - display: QOD
+                        text: dosageFrequency
+    Medication:
+      allOf:
+        - $ref: '#/components/schemas/DomainResource'
+        - type: object
+          properties:
+            code:
+              nullable: true
+              $ref: '#/components/schemas/CodeableConcept'
+              description: 'An object containing attributes related to a medication. Medications can include prescription, OTC, medications administered while in a healthcare facility regardless of visit type, medications reported by a patient Vaccination medications and diagnostic medications are excluded in this data class.'
+              example:
+                code:
+                  coding:
+                    - system: NDC Foreign Key
+                      code: '52817019100'
+                      display: Cyclobenzaprine HCl Oral Tablet 10 mg
+                    - system: www.fdbhealth.com
+                      code: '152028'
+                    - system: www.fdbhealth.com
+                      code: First Databank (FDB) Medication Code
+                    - system: http://www.nlm.nih.gov/research/umls/rxnorm
+                      code: '828348'
+                    - system: https://www.wolterskluwercdi.com
+                      code: '5573'
+                  text: Cyclobenzaprine Hydrochloride Oral Tablet 10 mg
+            form:
+              nullable: true
+              $ref: '#/components/schemas/CodeableConcept'
+              description: 'An object containing attributes related to dosage form.'
+              example:
+                form:
+                  coding:
+                    - system: FDA Dosage Form Foreign Key
+                      code: C25158
+                      display: capsule drug dosage form
+                  text: capsule drug dosage form
+            extension:
+              type: array
+              nullable: true
+              description: "All extensions in this list are defined in this specification and have a base URI. "
+              items:
+                anyOf:
+                  - $ref: '#/components/schemas/drugClass'
+                  - $ref: '#/components/schemas/deaSchedule'
+                  - $ref: '#/components/schemas/genericDrugName'
+    MedicationRequest:
+      allOf:
+        - $ref: '#/components/schemas/DomainResource'
+        - type: object
+          properties:
+            authoredOn:
+              nullable: true
+              type: string
+              pattern: >-
+                ([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?
+              description: >-
+                The date (and perhaps time) when the prescription was initially
+                written or authored on.
+            dispenseRequest:
+              nullable: true
+              type: array
+              items:
+                $ref: '#/components/schemas/MedicationRequest_DispenseRequest'
+            requester:
+              $ref: '#/components/schemas/Reference'
+      example:
+        authoredOn: '2018-03-28T05:30:00+05:30'
+    MedicationDispense:
+      allOf:
+        - $ref: '#/components/schemas/DomainResource'
+        - type: object
+          properties:
+            type:
+              nullable: true
+              description: 'An object containing attributes related to the dispensed quanity unit of measure.'
+              $ref: "#/components/schemas/CodeableConcept"
+            quantity:
+              nullable: true
+              discription: 'The amount of product dispensed.'
+              $ref: "#/components/schemas/SimpleQuantity"
+            extension:
+              nullable: true
+              $ref: "#/components/schemas/refillCount"
+            location:
+              $ref: "#/components/schemas/Reference"
+      example:
+        type:
+          coding:
+            - system: HL7v2 Units - Table 0574
+              code: cap
+              display: Capsule
+          text: Capsule
+        quantity:
+          value: 30
+    MedicationRequest_DispenseRequest:
+      allOf:
+        - $ref: '#/components/schemas/BackboneElement'
+        - type: object
+          properties:
+            numberOfRepeatsAllowed:
+              type: integer
+              nullable: true
+              format: int32
+              description: 'Represents the number of times that a prescription is authorized to be refilled.'
+            expectedSupplyDuration:
+              nullable: true
+              $ref: '#/components/schemas/Duration'
+              description: 'The total number of days’ supply of the prescription drug as dispensed by the dispensing agent. If the prescription is set to last 30 days. The number in this field would be: 30.'
+          example:
+            dispenseRequest:
+              numberOfRepeatsAllowed: 0
+              expectedSupplyDuration:
+                value: 6
+    Location:
+      allOf:
+        - $ref: '#/components/schemas/DomainResource'
+        - type: object
+          properties:
+            Identifier:
+              nullable: true
+              type: array
+              items:
+                $ref: '#/components/schemas/npinum'
+              example:
+                identifier:
+                  - type:
+                      coding:
+                        - system: http://hl7.org/fhir/sid/us-npi
+                          code: NPI
+                          display: National Provider Identifier
+                    value: '7777777777'
+            name:
+              type: string
+              description: 'The name of the medication supplier.'
+              nullable: true
+              example:
+                name: "Walgreens #1092"
+    Practitioner:
+      allOf:
+        - $ref: '#/components/schemas/DomainResource'
+        - type: object
+          properties:
+            Identifier:
+              type: array
+              items:
+                $ref: '#/components/schemas/npinum'
+              example:
+                identifier:
+                  - type:
+                      coding:
+                        - system: http://hl7.org/fhir/sid/us-npi
+                          code: NPI
+                          display: National Provider Identifier
+                    value: '7777777777'
+            name:
+              type: array
+              nullable: true
+              description: 'The name of the medication ordering provider, or prescriber.'
+              items:
+                $ref: '#/components/schemas/HumanName'
+              example:
+                name:
+                  - text: Bill Williamson
+            gender:
+              type: string
+              enum:
+                - male
+                - female
+                - other
+                - unknown
+              description: >-
+                Administrative Gender &ndash; the gender that the person is
+                considered to have for administration and record keeping
+                purposes.
+    PractitionerRole:
+      allOf:
+        - $ref: '#/components/schemas/DomainResource'
+        - type: object
+          properties:
+            identifier:
+              type: array
+              items:
+                anyOf:
+
+                  - $ref: '#/components/schemas/instanceId'
+                  - $ref: '#/components/schemas/relatedEntityNPInum'
+                  - $ref: '#/components/schemas/relatedEntityMPIN'
+                  - $ref: '#/components/schemas/relatedEntityTIN'
+
+            practitioner:
+              $ref:  '#/components/schemas/Reference'
+            code:
+              $ref:  '#/components/schemas/CodeableConcept'
+            specialty:
+              $ref:  '#/components/schemas/CodeableConcept'
+    Procedure:
+      allOf:
+        - $ref: '#/components/schemas/DomainResource'
+        - type: object
+          properties:
+            identifier:
+              type: array
+              items:
+                anyOf:
+                  - $ref: '#/components/schemas/recordKey'
+                  - $ref: '#/components/schemas/instanceId'
+                  - $ref: '#/components/schemas/referenceIds'
+                  - $ref: '#/components/schemas/relatedCareTeamInstanceIds'
+              description: A numeric or alphanumeric string that is associated with a single object or entity within a given system.
+              example:
+                - type:
+                    text: recordKey
+                  value: o*}Dci^Vj2DS9mggDvEzepfVVqzx{ZEsiUvmmn<+gbH%HEjP.xoJ0P2h8Y(h
+                  assigner:
+                    reference: "#1"
+                - type:
+                    text: instanceId
+                  value: '19523524502060'
+                  assigner:
+                    reference: "#1"
+              required:
+                - recordKey
+                - instanceId
+            extension:
+              type: array
+              items:
+                anyOf:
+                  - $ref: '#/components/schemas/healthEventStatus'
+                  - $ref: '#/components/schemas/presenceStateTerm'
+                  - $ref: '#/components/schemas/healthEventDomain'
+                  - $ref: '#/components/schemas/clinicallyRelevantDate'
+                  - $ref: '#/components/schemas/sensitivityClasses'
+                  - $ref: '#/components/schemas/dataSource'
+                  - $ref: '#/components/schemas/lastDispensedDate'
+              description: All extensions in this list are defined in this specification and have a base URI.
+              example:
+                extension:
+                  - url: https://new-wiki.optum.com/pages/viewpage.action?spaceKey=IHRI&title=IHR+API+Presence+State
+                    valueString: Present
+            type:
+              type: array
+              description:  A numeric or alphanumeric string that is associated with a single object or entity within a given system.
+              items:
+                $ref: '#/components/schemas/medicalDevice'
+              example:
+                code:
+                  coding:
+                    - system: Medispan Product Foreign Key
+                      code: 'N5329'
+                      display: Breast Pump
+                text: Breast Pump
+            owner:
+              $ref: '#/components/schemas/supplier'
+            note:
+              type: array
+              items:
+                allOf:
+                  - $ref: '#/components/schemas/patientNote'
+                  - $ref: '#/components/schemas/patientNoteAuthor'
+              description: >-
+                Further information about the statement.
+              example: 'Further other information'
+            contained:
+              type: array
+              description: 'Contained, inline Resources.'
+              items:
+                $ref: '#/components/schemas/Resource'
+              example:
+                contained:
+                  - resourceType: Organization
+                    id: '1'
+                    name: UHG
+            basedOn:
+              type: array
+              items:
+                $ref: '#/components/schemas/Reference'
+            code:
+              $ref: '#/components/schemas/CodeableConcept'
+            performedDateTime:
+              $ref: '#/components/schemas/dateTime'
+    Encounter:
+      allOf:
+        - $ref: '#/components/schemas/Resource'
+        - type: object
+          properties:
+            resourceType:
+              type: string
+              description: An identifier assigned to the record.
+              enum:
+                - Encounter
+            contained:
+              type: array
+              description: 'Contained, inline Resources.'
+              items:
+                $ref: '#/components/schemas/Encounter_Condition'
+            identifier:
+              type: array
+              description: A numeric or alphanumeric string that is associated with a single object or entity within a given system.
+              example:
+                - type:
+                    text: recordKey
+                  value: 'lQTW7h-A=+l@2P{huiZS'
+                - type:
+                    text: instanceId
+                  value: '36904128193011'
+                - type:
+                    text: referenceIds
+                  value: '["1234463535"]'
+                - type:
+                    text: relatedConditionInstanceIds
+                  value: '[36674180598117,36904565693021]'
+                - type:
+                    text: relatedMedicationInstanceIds
+                  value: '[11111,22222]'
+                - type:
+                    text: relatedProcedureInstanceIds
+                  value: '[66666,66666]'
+                - type:
+                    text: relatedDeviceInstanceIds
+                  value: '[12345566,12334]'
+                - type:
+                    text: relatedImmunizationInstanceIds
+                  value: '[1233456,433222]'
+                - type:
+                    text: relatedObservationInstanceIds
+                  value: '[333333,555555]'
+                - type:
+                    text: relatedCareTeamInstanceIds
+                  value: '[1234,1234567]'
+                - type:
+                    text: relatedServiceFacilityProviderInstanceIds
+                  value: '[13356001458,525266262]'
+                - type:
+                    text: sourceClaimIds
+                  value: '["7458632377"]'
+              items:
+                anyOf:
+                  - $ref: '#/components/schemas/recordKey'
+                  - $ref: '#/components/schemas/referenceIds'
+                  - $ref: '#/components/schemas/instanceId'
+                  - $ref: '#/components/schemas/relatedConditionInstanceIds'
+                  - $ref: '#/components/schemas/relatedMedicationInstanceIds'
+                  - $ref: '#/components/schemas/relatedProcedureInstanceIds'
+                  - $ref: '#/components/schemas/relatedDeviceInstanceIds'
+                  - $ref: '#/components/schemas/relatedImmunizationInstanceIds'
+                  - $ref: '#/components/schemas/relatedObservationInstanceIds'
+                  - $ref: '#/components/schemas/relatedCareTeamInstanceIds'
+                  - $ref: '#/components/schemas/relatedServiceFacilityProviderInstanceIds'
+                  - $ref: '#/components/schemas/sourceClaimIds'
+            type:
+              type: array
+              description: 'An object containing attributes to the patient visit or encounter, such as Inpatient Visit or Office Visit.'
+              example:
+                - coding:
+                    - system: IP ADT Patient Type
+                      code: INPATIENT
+                      display: Inpatient Visit
+                    - system: 'http://www.ama-assn.org/go/cpt'
+                      code: A7035
+                  text: Inpatient Visit
+              items:
+                $ref: '#/components/schemas/CodeableConcept'
+            class:
+              allOf:
+                - $ref: '#/components/schemas/Coding'
+              description: A textual description of the visit class.
+              example:
+                display: Inpatient Patient Classification
+            extension:
+              type: array
+              description: All extensions in this list are defined in this specification and have a base URI.
+              example:
+                - url: 'https://new-wiki.optum.com/pages/viewpage.action?spaceKey=IHRI&title=IHR+API+Presence+State'
+                  valueString: Present
+                - url: 'https://new-wiki.optum.com/display/IHRI/IHR+API+Sensitivity+Classes'
+                  valueString: '["CommunicableDiseases"]'
+                - url: 'https://new-wiki.optum.com/display/IHRI/IHR+API+Data+Source+Method'
+                  valueString: '["System Interface Data Acquisition Method"]'
+                - url: 'https://new-wiki.optum.com/display/IHRI/IHR+API+Clinically+Relevant+Date'
+                  valueDateTime: '2019-06-19T21:09:29+00:00'
+              items:
+                anyOf:
+                  - $ref: '#/components/schemas/presenceStateTerm'
+                  - $ref: '#/components/schemas/clinicallyRelevantDate'
+                  - $ref: '#/components/schemas/sensitivityClasses'
+                  - $ref: '#/components/schemas/dataSource'
+            location:
+              type: array
+              description: A textual description of the place of service as reported on a claim.
+              items:
+                $ref: '#/components/schemas/Encounter_Location'
+            hospitalization:
+              $ref: '#/components/schemas/Encounter_Hospitalization'
+            diagnosis:
+              type: array
+              items:
+                $ref: '#/components/schemas/Encounter_Diagnosis'
+            period:
+              allOf:
+                - $ref: '#/components/schemas/Period'
+              example:
+                start: '2018-04-24T00:00:00+00:00'
+                end: '2018-04-30T00:00:00+00:00'
+    Encounter_Location:
+      allOf:
+        - properties:
+            location:
+              allOf:
+                - $ref: '#/components/schemas/Coding'
+              description: A textual description of the place of service as reported on a claim.
+              example:
+                display: Inpatient Hospital
+    Encounter_Hospitalization:
+      allOf:
+        - properties:
+            admitSource:
+              allOf:
+                - $ref: '#/components/schemas/CodeableConcept'
+              description: The textual description of the source of admission for the patient to the facility.
+              example:
+                coding:
+                  - display: Self Referral from Home or Workplace - Nonhealthcare Facility Point of Origin
+            dischargeDisposition:
+              allOf:
+                - $ref: '#/components/schemas/CodeableConcept'
+              description: An object containing attributes to related to discharge disposition (the level of care) the patient was discharged to.
+              example:
+                coding:
+                  - system: IP ADT Discharge Disposition
+                    code: '01'
+                    display: Discharged to Home or Self Care (Routine Discharge)
+                text: Discharged to Home or Self Care (Routine Discharge)
+    Encounter_Diagnosis:
+      allOf:
+        - type: object
+          properties:
+            condition:
+              allOf:
+                - $ref: '#/components/schemas/Encounter_Condition'
+              description: A consumer-friendly textual description of a condition being treated at the time of admission.
+              example:
+                reference: '#1'
+            use:
+              allOf:
+                - $ref: '#/components/schemas/CodeableConcept'
+              description: A  textual description of a condition being treated at the time of admission.
+              example:
+                coding:
+                  - system: 'http://hl7.org/implement/standards/fhir/valueset-diagnosis-role.html'
+                    code: AD
+                    display: Admitting Diagnosis
+      required:
+        - condition
+    Encounter_Condition:
+      allOf:
+        - properties:
+            resourceType:
+              type: string
+              example: Condition
+            id:
+              type: string
+              example: '1'
+            code:
+              allOf:
+                - $ref: '#/components/schemas/CodeableConcept'
+              description: A  textual description of a condition being treated at the time of discharge.
+              example:
+                coding:
+                  - system: SNOMEDCT Qualifier Value Foreign Key
+                    code: '55561003'
+                    display: Active
+                text: Active
+    SimpleQuantity:
+      allOf:
+        - $ref: '#/components/schemas/Quantity'
+        - type: object
+    Quantity:
+      allOf:
+        - type: object
+          properties:
+            value:
+              type: number
+              description: >-
+                The value of the measured amount. The value includes an implicit
+                precision in the presentation of the value.
+            comparator:
+              type: string
+              enum:
+                - <
+                - <=
+                - '>='
+                - '>'
+              description: >-
+                How the value should be understood and represented &ndash;
+                whether the actual value is greater or less than the stated
+                value due to measurement issues; e.g. if the comparator is "<" ,
+                then the real value is < stated value.
+            unit:
+              type: string
+              pattern: '[ \r\n\t\S]+'
+              description: A human&ndash;readable form of the unit.
+            system:
+              type: string
+              pattern: \S*
+              description: >-
+                The identification of the system that provides the coded form of
+                the unit.
+            code:
+              type: string
+              pattern: '[^\s]+(\s[^\s]+)*'
+              description: >-
+                A computer processable form of the unit in some unit
+                representation system.
+    Duration:
+      allOf:
+        - $ref: '#/components/schemas/Quantity'
+        - type: object
+    Dosage_DoseAndRate:
+      allOf:
+        - $ref: '#/components/schemas/BackboneElement'
+        - type: object
+          properties:
+            doseQuantity:
+              $ref: '#/components/schemas/SimpleQuantity'
+    Dosage:
+      allOf:
+        - $ref: '#/components/schemas/BackboneElement'
+        - type: object
+          properties:
+            text:
+              type: string
+              pattern: '[ \r\n\t\S]+'
+              description: The instructions on how the medication is to be taken.
+            timing:
+              description: An object containing attributes related to order (prescribed) frequency.
+              $ref: '#/components/schemas/Timing'
+            doseAndRate:
+              type: array
+              description: The number of doses of medication taken by the person at the dosage frequency listed below.
+              items:
+                $ref: '#/components/schemas/Dosage_DoseAndRate'
+    Timing:
+      allOf:
+        - $ref: '#/components/schemas/BackboneElement'
+        - type: object
+          properties:
+            code:
+              $ref: '#/components/schemas/CodeableConcept'
+    Patient:
+      allOf:
+        - $ref: '#/components/schemas/DomainResource'
+        - type: object
+          properties:
+            identifier:
+              type: array
+              items:
+                $ref: '#/components/schemas/Identifier'
+            extension:
+              type: array
+              items:
+                allOf:
+                  - $ref: '#/components/schemas/Extension'
+
+              description:
+                A textual description of the role the individual plays in a relationship, such as Member, Patient, Contract Holder, etc. Also called "Self Role"
+            name:
+              type: array
+              items:
+                $ref: '#/components/schemas/HumanName'
+            telecom:
+              type: array
+              items:
+                $ref: '#/components/schemas/ContactPoint'
+            gender:
+              type: string
+              enum:
+                - male
+                - female
+                - other
+                - unknown
+              description: >-
+                Administrative Gender &ndash; the gender that the patient is
+                considered to have for administration and record keeping
+                purposes.
+            birthDate:
+              type: string
+              pattern: >-
+                ([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1]))?)?
+              description: The date of birth for the individual.
+            address:
+              type: array
+              items:
+                $ref: '#/components/schemas/Address'
+    ContactPoint:
+      allOf:
+        - $ref: '#/components/schemas/Element'
+        - type: object
+          properties:
+            system:
+              type: string
+              enum:
+                - phone
+                - fax
+                - email
+                - pager
+                - url
+                - sms
+                - other
+              description: >-
+                Telecommunications form for contact point &ndash; what
+                communications system is required to make use of the contact.
+            value:
+              type: string
+              pattern: '[ \r\n\t\S]+'
+              description: >-
+                The actual contact point details, in a form that is meaningful
+                to the designated communication system (i.e. phone number or
+                email address).
+            use:
+              type: string
+              enum:
+                - home
+                - work
+                - temp
+                - old
+                - mobile
+              description: Identifies the purpose for the contact point.
+            rank:
+              type: integer
+              format: int32
+              description: >-
+                Specifies a preferred order in which to use a set of contacts.
+                ContactPoints with lower rank values are more preferred than
+                those with higher rank values.
+            period:
+              $ref: '#/components/schemas/Period'
+    Address:
+      allOf:
+        - $ref: '#/components/schemas/Element'
+        - type: object
+          properties:
+            use:
+              type: string
+              enum:
+                - home
+                - work
+                - temp
+                - old
+                - billing
+              description: The purpose of this address.
+            type:
+              type: string
+              enum:
+                - postal
+                - physical
+                - both
+              description: >-
+                Distinguishes between physical addresses (those you can visit)
+                and mailing addresses (e.g. PO Boxes and care&ndash;of
+                addresses). Most addresses are both.
+            text:
+              type: string
+              pattern: '[ \r\n\t\S]+'
+              description: >-
+                Specifies the entire address as it should be displayed e.g. on a
+                postal label. This may be provided instead of or as well as the
+                specific parts.
+            line:
+              type: array
+              items:
+                type: string
+                pattern: '[ \r\n\t\S]+'
+                description: >-
+                  This component contains the house number, apartment number,
+                  street name, street direction,  P.O. Box number, delivery
+                  hints, and similar address information.
+            city:
+              type: string
+              pattern: '[ \r\n\t\S]+'
+              description: >-
+                The name of the city, town, suburb, village or other community
+                or delivery center.
+            district:
+              type: string
+              pattern: '[ \r\n\t\S]+'
+              description: The name of the administrative area (county).
+            state:
+              type: string
+              pattern: '[ \r\n\t\S]+'
+              description: >-
+                Sub&ndash;unit of a country with limited sovereignty in a
+                federally organized country. A code may be used if codes are in
+                common use (e.g. US 2 letter state codes).
+            postalCode:
+              type: string
+              pattern: '[ \r\n\t\S]+'
+              description: >-
+                A postal code designating a region defined by the postal
+                service.
+            country:
+              type: string
+              pattern: '[ \r\n\t\S]+'
+              description: >-
+                Country &ndash; a nation as commonly understood or generally
+                accepted.
+            period:
+              $ref: '#/components/schemas/Period'
+    HumanName:
+      allOf:
+        - $ref: '#/components/schemas/Element'
+        - type: object
+          properties:
+            use:
+              type: string
+              enum:
+                - usual
+                - official
+                - temp
+                - nickname
+                - anonymous
+                - old
+                - maiden
+              description: Identifies the purpose for this name.
+            text:
+              type: string
+              pattern: '[ \r\n\t\S]+'
+              description: >-
+                Specifies the entire name as it should be displayed e.g. on an
+                application UI. This may be provided instead of or as well as
+                the specific parts.
+            family:
+              type: string
+              pattern: '[ \r\n\t\S]+'
+              description: >-
+                The part of a name that links to the genealogy. In some cultures
+                (e.g. Eritrea) the family name of a son is the first name of his
+                father.
+            given:
+              type: array
+              items:
+                type: string
+                pattern: '[ \r\n\t\S]+'
+                description: Given name.
+            prefix:
+              type: array
+              items:
+                type: string
+                pattern: '[ \r\n\t\S]+'
+                description: >-
+                  Part of the name that is acquired as a title due to academic,
+                  legal, employment or nobility status, etc. and that appears at
+                  the start of the name.
+            suffix:
+              type: array
+              items:
+                type: string
+                pattern: '[ \r\n\t\S]+'
+                description: >-
+                  Part of the name that is acquired as a title due to academic,
+                  legal, employment or nobility status, etc. and that appears at
+                  the end of the name.
+            period:
+              $ref: '#/components/schemas/Period'
+    Annotation:
+      allOf:
+        - type: object
+          properties:
+            extension:
+              $ref: '#/components/schemas/Extension'
+            authorReference:
+              $ref: '#/components/schemas/Reference'
+            time:
+              type: string
+              pattern: >-
+                ([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?
+              description: Indicates when this particular annotation was made.
+            text:
+              type: string
+              pattern: '[ \r\n\t\S]+'
+              description: The text of the annotation in markdown format.
+              example: "This medication is not working for me.Should I try 40 mg?"
+            authorString:
+              type: string
+              pattern: '[ \r\n\t\S]+'
+              description: The individual responsible for making the annotation.
+              example: 'Jane Doe'
+    BackboneElement:
+      allOf:
+        - $ref: '#/components/schemas/Element'
+        - type: object
+    CodeableConcept:
+      allOf:
+        - type: object
+          properties:
+            coding:
+              type: array
+              items:
+                $ref: '#/components/schemas/Coding'
+            text:
+              type: string
+              pattern: '[ \r\n\t\S]+'
+              description: >-
+                A human language representation of the concept as
+                seen/selected/uttered by the user who entered the data and/or
+                which represents the intended meaning of the user.
+    Coding:
+      allOf:
+        - type: object
+          properties:
+            system:
+              type: string
+              pattern: \S*
+              description: >-
+                The identification of the code system that defines the meaning
+                of the symbol in the code.
+            code:
+              type: string
+              pattern: '[^\s]+(\s[^\s]+)*'
+              description: >-
+                A symbol in syntax defined by the system. The symbol may be a
+                predefined code or an expression in a syntax defined by the
+                coding system (e.g. post&ndash;coordination).
+            display:
+              type: string
+              pattern: '[ \r\n\t\S]+'
+              description: >-
+                A representation of the meaning of the code in the system,
+                following the rules of the system.
+    DomainResource:
+      oneOf:
+        - $ref: '#/components/schemas/AllergyIntolerance'
+        - $ref: '#/components/schemas/Organization'
+        - $ref: '#/components/schemas/Condition'
+        - $ref: '#/components/schemas/CareTeam'
+        - $ref: '#/components/schemas/HealthcareService'
+        - $ref: '#/components/schemas/Patient'
+        - $ref: '#/components/schemas/Medication'
+        - $ref: '#/components/schemas/MedicationDispense'
+        - $ref: '#/components/schemas/MedicationRequest'
+        - $ref: '#/components/schemas/MedicationStatement'
+        - $ref: '#/components/schemas/Practitioner'
+        - $ref: '#/components/schemas/PractitionerRole'
+        - $ref: '#/components/schemas/Encounter'
+        - $ref: '#/components/schemas/Device'
+        - $ref: '#/components/schemas/Immunization'
+        - $ref: '#/components/schemas/Observation'
+        - $ref: '#/components/schemas/Procedure'
+        - $ref: '#/components/schemas/Goal'
+        - $ref: '#/components/schemas/Location'
+    Element:
+      type: object
+      properties:
+        id:
+          type: string
+          pattern: '[A-Za-z0-9\-\.]{1,64}'
+          description: >-
+            Unique id for the element within a resource (for internal
+            references). This may be any string value that does not contain
+            spaces.
+          example:
+            text:
+              id: 'ADVERSE_REACTION'
+        extension:
+          type: array
+          items:
+            $ref: '#/components/schemas/Extension'
+      required:
+        - id
+    Extension:
+      allOf:
+        - type: object
+          properties:
+            url:
+              type: string
+              pattern: \S*
+              description: >-
+                Source of the definition for the extension code &ndash; a
+                logical name or a URL.
+            valueDateTime:
+              type: string
+              pattern: >-
+                ([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?
+              description: >-
+                Value of extension &ndash; must be one of a constrained set of
+                the data types (see [Extensibility](extensibility.html) for a
+                list).
+            valueString:
+              type: string
+              pattern: '[ \r\n\t\S]+'
+              description: >-
+                Value of extension &ndash; must be one of a constrained set of
+                the data types (see [Extensibility](extensibility.html) for a
+                list).
+            valueCodeableConcept:
+              $ref: '#/components/schemas/CodeableConcept'
+            valueReference:
+              $ref: '#/components/schemas/Reference'
+            valueDate:
+              type: string
+              pattern: >-
+                ([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1]))?)?
+              description: >-
+                Value of extension &ndash; must be one of a constrained set of
+                the data types (see [Extensibility](extensibility.html) for a
+                list).
+            valueBoolean:
+              type: boolean
+              description: >-
+                The information determined as a result of making the
+                observation, if the information has a simple value.
+
+      required:
+        - url
+    Identifier:
+      allOf:
+        - type: object
+          properties:
+            type:
+              $ref: '#/components/schemas/CodeableConcept'
+            value:
+              type: string
+              pattern: '[ \r\n\t\S]+'
+              description: >-
+                The portion of the identifier typically relevant to the user and
+                which is unique within the context of the system.
+          required:
+            - type
+            - value
+    Meta:
+      allOf:
+        - properties:
+            lastUpdated:
+              type: string
+              pattern: '([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00))'
+              description: When the resource last changed &ndash; e.g. when the version changed.
+              example: '2019-01-01T00:01:01Z'
+      type: object
+    Period:
+      allOf:
+        - type: object
+          properties:
+            start:
+              type: string
+              format: date-time
+              pattern: '([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?'
+              description: The start of the period. The boundary is inclusive.
+            end:
+              type: string
+              format: date-time
+              pattern: '([0-9]([0-9]([0-9][1-9]|[1-9]0)|[1-9]00)|[1-9]000)(-(0[1-9]|1[0-2])(-(0[1-9]|[1-2][0-9]|3[0-1])(T([01][0-9]|2[0-3]):[0-5][0-9]:([0-5][0-9]|60)(\.[0-9]+)?(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)))?)?)?'
+              description: 'The end of the period. If the end of the period is missing, it means no end was known or planned at the time the instance was created. The start may be in the past, and the end date in the future, which means that period is expected/planned to end at that time.'
+    Reference:
+      allOf:
+        - $ref: '#/components/schemas/Element'
+        - type: object
+          properties:
+            reference:
+              type: string
+              pattern: '[ \r\n\t\S]+'
+              description: 'A reference to a location at which the other resource is found. The reference may be a relative reference, in which case it is relative to the service base URL, or an absolute URL that resolves to the location where the resource is found. The reference may be version specific or not. If the reference is not to a FHIR RESTful server, then it should be assumed to be version specific. Internal fragment references (start with ''#'') refer to contained resources.'
+            type:
+              type: string
+              pattern: \S*
+              description: |-
+                The expected type of the target of the reference. If both Reference.type and Reference.reference are populated and Reference.reference is a FHIR URL, both SHALL be consistent.
+
+                The type is the Canonical URL of Resource Definition that is the type this reference refers to. References are URLs that are relative to http://hl7.org/fhir/StructureDefinition/ e.g. "Patient" is a reference to http://hl7.org/fhir/StructureDefinition/Patient. Absolute URLs are only allowed for logical models (and can only be used in references in logical models, not resources).
+            identifier:
+              $ref: '#/components/schemas/Identifier'
+            display:
+              type: string
+              pattern: '[ \r\n\t\S]+'
+              description: Plain text narrative that identifies the resource in addition to the resource reference.
+    Resource:
+      type: object
+      properties:
+        resourceType:
+          type: string
+          enum:
+            - AllergyIntolerance
+            - Organization
+            - Condition
+            - CareTeam
+            - HealthcareService
+            - Patient
+            - Medication
+            - MedicationStatement
+            - MedicationDispense
+            - MedicationRequest
+            - Practitioner
+            - PractitionerRole
+            - Encounter
+            - Device
+            - Immunization
+            - Observation
+            - Procedure
+            - Goal
+        id:
+          type: string
+          pattern: '[A-Za-z0-9\-\.]{1,64}'
+          description: 'The logical id of the resource, as used in the URL for the resource. Once assigned, this value never changes.'
+        meta:
+          $ref: '#/components/schemas/Meta'
+      required:
+        - resourceType
+    instanceId:
+      allOf:
+        - $ref: '#/components/schemas/Identifier'
+      description: A numeric ID that uniquely identifies an object; the identifier of the specific allergy/intolerance.
+      example:
+        identifier:
+          - type:
+              text: instanceId
+            value: '19523524502060'
+    recordKey:
+      allOf:
+        - $ref: '#/components/schemas/Identifier'
+      description: A concatenation of information that can uniquely identify a data class entry within a single IHR.
+      example:
+        identifier:
+          - type:
+              text: recordKey
+            value: lQTW7h-A=+l@2J)gCQY=
+    refillCount:
+      allOf:
+        - $ref: '#/components/schemas/Extension'
+      description: Represents the most recent refill count for a prescription.
+    clinicalNote:
+      nullable: true
+      type: array
+      description: A free-text note added by the practitioner regarding the object. 1000 character limit.
+      items:
+        $ref: '#/components/schemas/Annotation'
+      example:
+        note:
+          - extension:
+              - url: 'https://new-wiki.optum.com/display/IHRI/ihrNoteType'
+                valueString: clinicalNote
+            authorReference:
+              reference: '#/components/schemas/Practitioner'
+            time: '2018-03-28T00:00:00+00:00'
+            text: Patient reports medication gives him nausea.
+    drugClass:
+      allOf:
+        - $ref: '#/components/schemas/Extension'
+      nullable: true
+      description: 'The therapeutic class to which a medication belongs, also called a pharmaceutical class. It is possble that one drug is assigned to multiple classes.'
+    presenceStateTerm:
+      allOf:
+        - $ref: '#/components/schemas/Extension'
+      description: 'A textual description of the presence state. Presence State value is updated based on internal IHR calculations, using a variety of factors.'
+      enum:
+        - Present
+        - Not Present
+        - Past Occurrence
+        - Planned Occurrence
+      example:
+        extension:
+          - url: https://new-wiki.optum.com/pages/viewpage.action?spaceKey=IHRI&title=IHR+API+Presence+State
+            valueString: Present
+    deaSchedule:
+      allOf:
+        -  $ref: '#/components/schemas/Extension'
+      description: 'The controlled substance schedule into which a particular drug is classified, based on the DEA schedule'
+      example:
+        extension:
+          - url: http://terminology.hl7.org/CodeSystem/v2-0477
+            valueString: Schedule IV Controlled Substance
+    genericDrugName:
+      allOf:
+        - $ref: '#/components/schemas/Extension'
+      description: 'The generic name of a medication.'
+      example:
+        extension:
+          - url: http://bioportal.bioontology.org/ontologies/RXNORM/?p=classes&conceptid=root
+            valueString: Fluoxetine Oral Capsule 20 mg
+    clinicallyRelevantDate:
+      allOf:
+        - $ref: '#/components/schemas/Extension'
+      description: The date that represents last activity date and time that is significant and relevant to the type of health item. in the format 'yyyy-MM-ddTHH:mm:ssZ (UTC time).
+      example:
+        extension:
+          - url: https://new-wiki.optum.com/display/IHRI/IHR+API+Clinically+Relevant+Date
+            valueDateTime: "2019-02-18T05:30:00+05:30"
+    dataSource:
+      allOf:
+        - $ref: '#/components/schemas/Extension'
+      description: A textual description of the data acquisition method.
+      enum:
+        - Direct Entry Acquisition method
+        - Data Derived from Other Data
+        - Provider Direct Entry
+        - Individual Direct Entry
+        - Reported Data Method
+        - Repurposed Data Method
+        - Rule Evaluation Data Acquisition Method
+        - Staff Entry Data Acquisition Method
+        - Stated Method
+        - System Interface Data Acquisition Method
+      example:
+        extension:
+          - url: https://new-wiki.optum.com/display/IHRI/IHR+API+Data+Source+Method"
+            valueString: "[\"System Interface Data Acquisition Method\"]"
+    sensitivityClasses:
+      allOf:
+        - $ref: '#/components/schemas/Extension'
+      description: Array of sensitivity classes assigned to this item. Empty array when none apply.
+      enum:
+        - Abandonment
+        -  Abuse Activity
+        -  Body Image
+        - Brain Disorder
+        - Communicable Diseases
+        -  Contraception
+        -  Counseling
+        -  Genetic
+        -  HIV/AIDS
+        -  Mental/Behavioral Health
+        -  Neglect
+        -  Paid Monetary Amount
+        -  Pathology
+        -  Physical Abuse
+        -  Physical Abuse or Neglect
+        -  Pregnancy/Childbirth
+        -  Psychological Function
+        -  Reproductive Health
+        -  Self Harm
+        -  Sex and Gender Disorder
+        -  STD (Sexually Transmitted Disease)
+        -  Substance Abuse
+      example:
+        extension:
+          - url: https://new-wiki.optum.com/display/IHRI/IHR+API+Sensitivity+Classes
+            valueString: "[\"Mental/Behavioral Health\"]"
+    severity:
+      allOf:
+        - $ref: '#/components/schemas/Extension'
+      description: An object containing attributes related to the severity of the reaction.
+    dateTime:
+      nullable: true
+      example: '2019-10-24T13:33:05Z'
+      pattern: '(19|20)[0-9][0-9]-(0[0-9]|1[0-2])-(0[1-9]|([12][0-9]|3[01]))T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]Z'
+      type: string
+      format: date-time
+    date:
+      nullable: true
+      example: 2011/07/11
+      pattern: '^\d{4}/\d{2}/\d{2}$'
+      type: string
+      format: date
+    clinicalCourse:
+      allOf:
+        - $ref:  '#/components/schemas/Extension'
+      description:  'A textual description of the clinical course of a condition. Clinical course values include but are not limited to&colon; active, chronic, subacute, sequela, acute-on-chronic, recurrent. Not all condition concepts will have a clinical course.'
+      example:
+        extension:
+          - url: https://new-wiki.optum.com/display/IHRI/IHR+API+Clinical+Course
+            valueString: "Chronic"
+    status:
+      allOf:
+        - $ref:  '#/components/schemas/Extension'
+      description: It contains the attributes relating to status of health condition
+      example:
+        - extension:
+            url : https://new-wiki.optum.com/display/IHRI/IHR+API+Status
+            valueCodeableConcept:
+              coding:
+                - system: SNOMEDCT Qualifier Value Foreign Key
+                  code: 55561003
+                  display: Active
+              text: Active
+    relatedConditionInstanceIds:
+      allOf:
+        - $ref:  '#/components/schemas/Identifier'
+      description: Array of object ids of related health conditions. Empty array when none apply.
+      example:
+        identifier:
+          - type:
+              text: relatedConditionInstanceIds
+            value: '[123456,789]'
+    relatedMedicationInstanceIds:
+      allOf:
+        - $ref:  '#/components/schemas/Identifier'
+      description: Array of object ids of related health conditions. Empty array when none apply.
+    relatedObservationInstanceIds:
+      allOf:
+        - $ref:  '#/components/schemas/Identifier'
+      description: Array of object ids of related health observations. Empty array when none apply.
+      example:
+        identifier:
+          - type:
+              text: relatedObservationInstanceIds
+            value: '[123456,789]'
+    relatedImmunizationInstanceIds:
+      allOf:
+        - $ref:  '#/components/schemas/Identifier'
+      description: Array of object ids of related immunizations. Empty array when none apply.
+    relatedProcedureInstanceIds:
+      allOf:
+        - $ref:  '#/components/schemas/Identifier'
+      description: Array of object ids of related procedures. Empty array when none apply.
+    relatedCareTeamInstanceIds:
+      allOf:
+        - $ref:  '#/components/schemas/Identifier'
+      description: Array of object ids of related care team members. Empty array when none apply.
+      example:
+        identifier:
+          - type:
+              text: relatedCareTeamInstanceIds
+            value: '[123456,789]'
+    sourceClaimIds:
+      allOf:
+        - $ref:  '#/components/schemas/Identifier'
+      description: Array of claim ids (ICNs) when derived from
+        medical claims. Empty array when none apply.
+      example:
+        identifier:
+          - type:
+              text: sourceClaimIds
+            value: '[\"123456\",\"789\"]'
+    referenceIds:
+      allOf:
+        - $ref:  '#/components/schemas/Identifier'
+      description: >-
+        The referenceId key is a field on each data class that is a concatenation
+        of information that can uniquely identify a data class entry within a
+        single IHR.
+      example:
+        identifier:
+          - type:
+              text: referenceIds
+            value: '[\"2019-01-02T03:04:44Z-Rally-1sE\"]'
+    healthcareservice:
+      allOf:
+        - $ref: '#/components/schemas/Extension'
+    npinum:
+      allOf:
+        - $ref:  '#/components/schemas/Identifier'
+      nullable: true
+      description: >-
+        A National Provider Identifier or NPI is a unique 10-digit
+        identification number issued to health care providers in the
+        United States by the Centers for Medicare and Medicaid
+        Services (CMS).
+      example: '1850076532'
+    relatedEntityMPIN:
+      allOf:
+        - $ref:  '#/components/schemas/Identifier'
+      nullable: true
+      description: United assigned unique identifier.
+      example: '9999999999'
+    relatedDeviceInstanceIds:
+      allOf:
+        - $ref: '#/components/schemas/Identifier'
+      description: 'An array of object ids of related health devices. Empty array when none apply.'
+    icueSeqId:
+      allOf:
+        - $ref: '#/components/schemas/Identifier'
+      description: 'The medication sequence identifier that identifies a specific medication for a patient in the iCue system. The extract identifier is a combination of a member ID plus a medication identifier from the iCue system.'
+    medicationStatus:
+      allOf:
+        - $ref: '#/components/schemas/Extension'
+      description: 'An object containing attributes related to a status.  Status value changes only when data is ingested into into the IHR, and no other internal IHR calculation is used to update this field.'
+    genericFlag:
+      allOf:
+        - $ref: '#/components/schemas/Extension'
+      description: 'Indicates if the medication is generic.  TRUE=GENERIC'
+      example:
+        extension:
+          - url: https://new-wiki.optum.com/display/IHRI/Medication+generic+flag
+            valueBoolean: true
+    firstDoseDate:
+      allOf:
+        - $ref: '#/components/schemas/Extension'
+      description: 'The date and time the  in the format yyyy-MM-ddTHH:mm:ssZ (UTC time)'
+    expectedFillDate:
+      allOf:
+        - $ref: '#/components/schemas/Extension'
+      description: 'The next expected fill datein the format yyyy-MM-ddTHH:mm:ssZ (UTC time). The date is calculated from last fill date and days supply.'
+    lastFillDate:
+      allOf:
+        - $ref: '#/components/schemas/Extension'
+      description: 'The most recent date this prescription was filled in the format yyyy-MM-ddTHH:mm:ssZ (UTC time)..'
+    icueLastUpdateDate:
+      allOf:
+        - $ref: '#/components/schemas/Extension'
+      description: 'The date and time of the last update received from the ICUE system in the format yyyy-MM-ddTHH:mm:ssZ (UTC time)'
+    relatedServiceFacilityProviderInstanceIds:
+      allOf:
+        - $ref: '#/components/schemas/Identifier'
+      description: 'An array of object ids of related service facility providers. Empty array when none apply.'
+    prescriptionId:
+      allOf:
+        - $ref: '#/components/schemas/Identifier'
+      description: 'The identifier of a dispensed prescription.'
+    relatedEntityNPInum:
+      allOf:
+        - $ref:  '#/components/schemas/Identifier'
+      description: >-
+        A National Provider Identifier or NPI is a unique 10-digit
+        identification number issued to health care providers in the
+        United States by the Centers for Medicare and Medicaid Services
+        (CMS).
+      nullable: true
+      example: '8888888888'
+    relatedEntityTIN:
+      allOf:
+        - $ref:  '#/components/schemas/Identifier'
+      nullable: true
+      description: A Taxpayer Identification Number (TIN) is an identification number used by the Internal Revenue Service (IRS) in the administration of tax laws. It is issued either by the Social Security Administration (SSA) or by the IRS.
+      example: '9999999999'
+    PractitionerFlag:
+      allOf:
+        - $ref:  '#/components/schemas/Extension'
+      description:  Identifies the relationship to the patient as that of a primary care provider course.
+      example: false
+    medicalDevice:
+      allOf:
+        - $ref:  '#/components/schemas/Extension'
+      description:  An object containing attributes related to a health device. Health Devices are physical items used in medical treatment and devices such as  physical item used in medical treatment, such as cardiac pacemaker, wheelchair, insulin pump, breathing device, blood sugar monitor, blood pressure monitor, and pulmonary function peak flow meters, etc. Devices that are used in surgery and diagnostic devices are excluded from this data class.
+    medicalDeviceStatus:
+      allOf:
+        - $ref:  '#/components/schemas/CodeableConcept'
+      description:  An object containing attributes related to a status. Status value changes only when data is ingested into into the IHR, and no other internal IHR calculation is used to update this field.
+    healthEventStatus:
+      allOf:
+        - $ref:  '#/components/schemas/Extension'
+      description:  An object containing attributes related to a status.  Status value changes only when data is ingested into into the IHR, and no other internal IHR calculation is used to update this field.
+    healthEventDomain:
+      allOf:
+        - $ref:  '#/components/schemas/Extension'
+      description:  An textual description of the medical knowledge domain of a procedure. Examples include but are not limited to surgery, physical therapy, clinical pathology/laboratory medicine. Not all procedure concepts will have a medical domain..
+    medicalDeviceDate:
+      allOf:
+        - $ref:  '#/components/schemas/Extension'
+      description:  The date that the IHR first "knows" about the health device, in the format 'yyyy-MM-ddTHH:mm:ssZ (UTC time). This date updates using algorithmic calculations based on data received about the item. This date is not a clinical date, but may be based on one.
+      example:
+    supplier:
+      allOf:
+        - $ref:  '#/components/schemas/CodeableConcept'
+      description:  An object containing attributes related to a health device supplier. The supplier, which can be a pharmacy, hospital, or medical professional.
+    patientNote:
+      $ref:  '#/components/schemas/Annotation'
+      description:  A free-text note added by the patient regarding the object. 500 character limit.
+      example:  Jane Doe
+    patientNoteAuthor:
+      $ref:  '#/components/schemas/Annotation'
+      description:  The author of a free-text note that is added to a patient record.
+      example: This is manual and I prefer electronic.
+    lastDispensedDate:
+      allOf:
+        - $ref:  '#/components/schemas/Extension'
+      description:  Most recent date when thisThe date on which the item was last updated in IHR, in the format 'yyyy-MM-ddTHH:mm:ssZ (UTC time). Also referred to as "last activity date". data was updated in IHR.
+    healthEventDate:
+      allOf:
+        - $ref: '#/components/schemas/dateTime'
+      description: The date the immunization health event occurred, in the format 'yyyy-MM-ddTHH:mm:ssZ (UTC time).
+    selfRoleTerm:
+      allOf:
+        - $ref:  '#/components/schemas/Extension'
+      description: A textual description of the role the individual plays in a relationship, such as Member, Patient, Contract Holder, etc. Also called "Self Role".
+    concept:
+      $ref: '#/components/schemas/Extension'
+      description: The date the immunization health event occurred, in the format 'yyyy-MM-ddTHH:mm:ssZ (UTC time).
+      example:
+        code:
+          coding:
+            - system: NDC Foreign Key
+              code: '49281040015'
+              display: Adacel Intramuscular Suspension 5-2-15.5 LF-mcg/0.5 mL
+        text: Adacel Intramuscular Suspension 5-2-15.5 LF-mcg/0.5 mL
+    dosageUnit:
+      $ref: '#/components/schemas/Extension'
+      description: The date the immunization health event occurred, in the format 'yyyy-MM-ddTHH:mm:ssZ (UTC time).
+      example:
+        code:
+          coding:
+            - system: IHR Ontology
+              code:
+              display: mcg/mL
+        text: mcg/mL
+    dosageForm:
+      $ref: '#/components/schemas/Extension'
+      description: The date the immunization health event occurred, in the format 'yyyy-MM-ddTHH:mm:ssZ (UTC time).
+      example:
+        extension:
+          url: https://new-wiki.optum.com/display/IHRI/IHR+API+Dose+Form
+          coding:
+            - system: IHR Ontology
+              code:
+              display: mcg/mL
+          text: mcg/mL
+    medication:
+      $ref: '#/components/schemas/CodeableConcept'
+      description: The date the immunization health event occurred, in the format 'yyyy-MM-ddTHH:mm:ssZ (UTC time).
+      example:
+        code:
+          coding:
+            - system: NDC Foreign Key
+              code: 49281040015
+              display: Adacel Intramuscular Suspension 5-2-15.5 LF-mcg/0.5 mL
+          text: Adacel Intramuscular Suspension 5-2-15.5 LF-mcg/0.5 mL
+    dosageFrequency:
+      $ref: '#/components/schemas/Extension'
+      description: The date the immunization health event occurred, in the format 'yyyy-MM-ddTHH:mm:ssZ (UTC time).
+      example:
+        extension:
+          - url: https://new-wiki.optum.com/display/IHRI/IHR+API+Dose+Frequency
+            valueString: nightly at bedtime
+    observationUnitOfMeasure:
+      allOf:
+        - $ref:  '#/components/schemas/Extension'
+      description:  An object that contains attributes of a unit of measure, a quantifiable amount.
+    observationValue:
+      allOf:
+        - $ref:  '#/components/schemas/valueCodeableConcept'
+      description:  An object that contains attributes related to the description of the observation where textual observation is aligned with an ontological concept..
+    abnormalIndicator:
+      allOf:
+        - $ref:  '#/components/schemas/interpretation'
+      description:  An object that contains attributes of the observation results if they're within the normal reference range.
+    valueCodeableConcept:
+      allOf:
+        - $ref:  '#/components/schemas/CodeableConcept'
+      description:  An object that contains attributes related to the description of the observation where textual observation is aligned with an ontological concept.
+      example:
+        code:
+          coding:
+            - system: SNOMEDCT Qualifier Value Foreign Key
+              code: 10828004
+              display: Positive
+          text: Positive
+    interpretation:
+      allOf:
+        - $ref:  '#/components/schemas/CodeableConcept'
+      description:  An object that contains attributes of the observation results if they're within the normal reference range.
+      example:
+        code:
+          coding:
+            - system: HL7v2 Abnormal Flags - Table 0078 Foreign Key
+              code: A
+              display: Abnormal
+          text: Abnormal
+    expectedAchievement:
+      allOf:
+        - $ref: '#/components/schemas/Extension'
+      description: The textual description of the achievement that is expected for the patient.
+    goalTargetType:
+      allOf:
+        - $ref: '#/components/schemas/Extension'
+      description: An object containing the attributes related to the target type of the goal
